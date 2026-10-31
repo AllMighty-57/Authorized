@@ -5,7 +5,7 @@ using Unity.Services.Core;
 using UnityEngine;
 
 public class LoginManager : MonoBehaviour
-{  
+{   
     private async void Awake()
     {
         if(UnityServices.State == ServicesInitializationState.Uninitialized)
@@ -15,13 +15,24 @@ public class LoginManager : MonoBehaviour
         } 
 
         PlayerAccountService.Instance.SignedIn += SignInOrLinkWithUnity;
-    } 
-        
+    }
+
+    private async void Start()
+    {
+        if (!AuthenticationService.Instance.SessionTokenExists)
+        {
+            Debug.Log("Session Token not found");
+            return;
+        }
+        Debug.Log("Returning player signing in...");
+        await SignInAnonymouslyAsync();
+    }
+
     public async void StartAnonymousSignIn()
     {
-        await SignUpAnonymouslyAsync();
+        await SignInAnonymouslyAsync();
     }
-    private async Task SignUpAnonymouslyAsync()
+    private async Task SignInAnonymouslyAsync()
     {
         try
         {
@@ -45,7 +56,7 @@ public class LoginManager : MonoBehaviour
             Debug.LogException(ex);
         }
     }
-    async void StartUnitySignInAsync()
+    public async void StartUnitySignInAsync()
     {
         if (PlayerAccountService.Instance.IsSignedIn)
         {
@@ -66,16 +77,35 @@ public class LoginManager : MonoBehaviour
     private async void SignInOrLinkWithUnity()
     {
         try
-        { 
+        {   // 1. Player is not yet authenticated, signing up with Unity
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                Debug.Log("Signing up with Unity Player Account...");
+                await AuthenticationService.Instance.SignInWithUnityAsync(PlayerAccountService.Instance.AccessToken);
+                Debug.Log("Successfully signed up with Unity Player Account");
+            }
+            // 2. Player is authenticated, but deos not yet have a Unity ID linked, so let's link
+            if (!HasUnityID())
+            {
+                Debug.Log("Linking anonymous account to Unity...");
+                await LinkWithUnityAsync(PlayerAccountService.Instance.AccessToken);
+                Debug.Log("Successfully linked anonymous account!");
+                return;
+            }
 
-            await AuthenticationService.Instance.SignInWithUnityAsync(PlayerAccountService.Instance.AccessToken);
-            
+            //3. Player has authentication and a Unity ID
+            Debug.Log("Player is already signed in to their Unity Player Account");
         }
         catch (RequestFailedException ex)
         {
             Debug.LogException(ex);
             
         }
+    } 
+
+    private bool HasUnityID()
+    {
+        return AuthenticationService.Instance.PlayerInfo.GetUnityId() != null;
     }
     async Task LinkWithUnityAsync(string accessToken)
     {
