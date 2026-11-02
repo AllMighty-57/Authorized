@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Unity.Services.Authentication;
 using Unity.Services.Authentication.PlayerAccounts;
@@ -5,7 +6,9 @@ using Unity.Services.Core;
 using UnityEngine;
 
 public class LoginManager : MonoBehaviour
-{   
+{
+    public Action PlayerSignedIn;
+
     private async void Awake()
     {
         if(UnityServices.State == ServicesInitializationState.Uninitialized)
@@ -40,7 +43,9 @@ public class LoginManager : MonoBehaviour
             Debug.Log("Sign in anonymously succeeded!");
 
             // Shows how to get the playerID
-            Debug.Log($"PlayerID: {AuthenticationService.Instance.PlayerId}");
+            Debug.Log($"PlayerID: {AuthenticationService.Instance.PlayerId}"); 
+
+            PlayerSignedIn.Invoke();
 
         }
         catch (AuthenticationException ex)
