@@ -1,32 +1,39 @@
-using UnityEngine;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Unity.Services.CloudCode;
 using Unity.Services.CloudCode.GeneratedBindings;
-using System;
-using System.Threading.Tasks;
+using UnityEngine;
 
 public class PlayerDataManager : MonoBehaviour
 {
-    public MyModuleBindings MyModuleBindings;
+    private PlayerDataServiceBindings m_Bindings;
     public LoginManager LoginManager; 
     public string PlayerName;
 
     void Start()
     { 
         LoginManager.PlayerSignedIn += InitializePlayer; 
-        MyModuleBindings = new MyModuleBindings(CloudCodeService.Instance);
+        m_Bindings = new PlayerDataServiceBindings(CloudCodeService.Instance);
 
     }
 
     private async void InitializePlayer()
-    {
+    { 
+        if (!IsPlayerNameValid(PlayerName))
+        {
+            Debug.LogWarning("Name must be 4-16 characters and contain only letters and numbers");
+            return;
+        }
         try
         {
-            var resultFromCloud = await MyModuleBindings.SayHello(PlayerName);
+            var resultFromCloud = await m_Bindings.SayHello(PlayerName);
             Debug.Log($"{resultFromCloud}");
         } 
 
         catch(CloudCodeException ex)
         {
+            Debug.LogWarning("Player name invalid");
             Debug.LogException(ex);
         }
     } 
@@ -35,7 +42,7 @@ public class PlayerDataManager : MonoBehaviour
     {
         try
         {
-            // PlayerName = await MyModuleBindings 
+            PlayerName = await m_Bindings.HandleNewPlayerNameEntry(PlayerName);
             Debug.Log($"Saved new player name in cloud: {PlayerName}"); 
         } 
 
@@ -43,6 +50,21 @@ public class PlayerDataManager : MonoBehaviour
         {
             Debug.LogException(ex);
         }
+    }
+
+    private bool IsPlayerNameValid(string Name)
+    {
+        if (Name.Length is < 4 or > 16)
+        {
+            return false;
+        }
+
+        // Check for special characters uning LINQ 
+        if (!Name.All(c => char.IsLetterOrDigit(c)))
+        {
+            return false;
+        }
+        return true;
     }
 
     private void OnDisable()

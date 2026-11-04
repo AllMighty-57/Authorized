@@ -5,13 +5,13 @@ using System;
 
 namespace Unity.Services.CloudCode.GeneratedBindings
 {
-    public class MyModuleBindings
+    public class PlayerDataServiceBindings
     {
         readonly ICloudCodeService k_Service;
 
-        public MyModuleBindings() : this(CloudCodeService.Instance) { }
+        public PlayerDataServiceBindings() : this(CloudCodeService.Instance) { }
 
-        public MyModuleBindings(ICloudCodeService service)
+        public PlayerDataServiceBindings(ICloudCodeService service)
         {
             k_Service = service;
         }
