@@ -5,59 +5,60 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Unity.Services.CloudCode.Apis;
+using Unity.Services.CloudCode.Apis.Extensions;
 using Unity.Services.CloudCode.Core;
 using Unity.Services.CloudCode.Shared;
 using Unity.Services.CloudSave.Model;
 
-namespace AuthorizedCloud;
-
 public class PlayerDataService
 {
-    private readonly ILogger<PlayerDataService> _logger;
     public const string k_PlayerNameKey = "PLAYER_NAME";
+    private readonly ILogger<PlayerDataService> _logger;
 
     public PlayerDataService(ILogger<PlayerDataService> logger)
     {
         _logger = logger;
     }
 
-    
-    private async Task SaveData(IExecutionContext context, IGameApiClient gameApiClient, string key, object value)
+    public async Task SavePlayerData(IExecutionContext context, IGameApiClient gameApiClient, string key, string value)
     {
         try
         {
             await gameApiClient.CloudSaveData.SetItemAsync(
                 context,
-                context.AccessToken,
-                context.ProjectId,
-                context.PlayerId,
+                context.AccessToken!,
+                context.ProjectId!,
+                context.PlayerId!,
                 new SetItemBody(key, value));
+
+            _logger.LogInformation("Successfully saved data for key: {Key}", key);
         }
         catch (ApiException ex)
         {
-            _logger.LogError("Failed to save data. Error: {Error}", ex.Message);
-            throw new Exception($"Failed to save data for playerID: {context.PlayerId}. Error: {ex.Message}");
+            _logger.LogError("Failed to save data for key {Key}. Error: {Error}", key, ex.Message);
+            throw new Exception($"Unable to save player data: {ex.Message}");
         }
     }
 
-    
-    private async Task<object> GetData(IExecutionContext context, IGameApiClient gameApiClient, string key)
+    public async Task<string> GetPlayerData(IExecutionContext context, IGameApiClient gameApiClient, string key)
     {
         try
         {
             var result = await gameApiClient.CloudSaveData.GetItemsAsync(
                 context,
-                context.AccessToken,
-                context.ProjectId,
-                context.PlayerId,
+                context.AccessToken!,
+                context.ProjectId!,
+                context.PlayerId!,
                 new List<string> { key });
 
-            return result.Data.Results.First().Value;
+            var data = result.Data.Results.FirstOrDefault()?.Value?.ToString() ?? string.Empty;
+            _logger.LogInformation("Successfully retrieved data for key: {Key}", key);
+            return data;
         }
         catch (ApiException ex)
         {
-            _logger.LogError("Failed to save data. Error: {Error}", ex.Message);
-            throw new Exception($"Failed to save data for playerID: {context.PlayerId}. Error: {ex.Message}");
+            _logger.LogError("Failed to retrieve data for key {Key}. Error: {Error}", key, ex.Message);
+            throw new Exception($"Unable to retrieve player data: {ex.Message}");
         }
     }
 
@@ -72,8 +73,8 @@ public class PlayerDataService
     public async Task<string> HandleNewPlayerNameEntry(IExecutionContext context, IGameApiClient gameApiClient, string newName)
     {
         if (IsPlayerNameValid(newName))
-        { 
-            await SaveData(context, gameApiClient, k_PlayerNameKey, newName);
+        {
+            await SavePlayerData(context, gameApiClient, k_PlayerNameKey, newName);
             return newName;
         }
         throw new ArgumentException("Name is not valid");
@@ -92,13 +93,11 @@ public class PlayerDataService
             return false;
         }
         return true;
-    }
+    } 
 
-    [CloudCodeFunction("GetServerTime")]
-    public string GetServerTime(IExecutionContext context)
-    {
-        return DateTime.UtcNow.ToString(CultureInfo.InvariantCulture);
-    }
+
+
+
 }
 
 

@@ -5,13 +5,13 @@ using System;
 
 namespace Unity.Services.CloudCode.GeneratedBindings
 {
-    public class PlayerDataServiceBindings
+    public class PlayerDataService
     {
         readonly ICloudCodeService k_Service;
 
-        public PlayerDataServiceBindings() : this(CloudCodeService.Instance) { }
+        public PlayerDataService() : this(CloudCodeService.Instance) { }
 
-        public PlayerDataServiceBindings(ICloudCodeService service)
+        public PlayerDataService(ICloudCodeService service)
         {
             k_Service = service;
         }
@@ -35,16 +35,6 @@ namespace Unity.Services.CloudCode.GeneratedBindings
                 new Dictionary<string, object>()
                 {
                     {"newName", newName},
-                });
-        }
-
-        public async Task<string> GetServerTime()
-        {
-            return await k_Service.CallModuleEndpointAsync<string>(
-                "AuthorizedCloud",
-                "GetServerTime",
-                new Dictionary<string, object>()
-                {
                 });
         }
     }

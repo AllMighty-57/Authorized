@@ -1,9 +1,8 @@
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Unity.Services.CloudCode;
-using Unity.Services.CloudCode.GeneratedBindings;
 using UnityEngine;
+using Unity.Services.CloudCode.GeneratedBindings;
 
 public class PlayerDataManager : MonoBehaviour
 {
