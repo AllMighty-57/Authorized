@@ -9,15 +9,28 @@ public class LoginManager : MonoBehaviour
 {
     public Action PlayerSignedIn;
 
-    private async void Awake()
+    private void Awake()
     {
-        if(UnityServices.State == ServicesInitializationState.Uninitialized)
+        //if you subscribe to a unity service make sure you check services are intiialized before using them
+        if (UnityServices.State == ServicesInitializationState.Initialized)
         {
-            Debug.Log("Services Initializing"); 
-            await UnityServices.InitializeAsync();
-        } 
+            UnitySignInSubscription();
+        }
+        else
+        {
+            UnityServices.Initialized += UnitySignInSubscription;
+        }
+    }
 
+    private void UnitySignInSubscription()
+    {
+        //we use this signedin event as an example but could be another service event that works for your project
         PlayerAccountService.Instance.SignedIn += SignInOrLinkWithUnity;
+    }
+    private void OnDisable()
+    {
+        PlayerAccountService.Instance.SignedIn -= SignInOrLinkWithUnity;
+        UnityServices.Initialized -= UnitySignInSubscription;
     }
 
     private async void Start()
@@ -137,6 +150,5 @@ public class LoginManager : MonoBehaviour
             Debug.LogException(ex);
         }
     }
-
 
 }

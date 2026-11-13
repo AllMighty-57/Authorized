@@ -6,14 +6,14 @@ using Unity.Services.CloudCode.GeneratedBindings;
 
 public class PlayerDataManager : MonoBehaviour
 {
-    private PlayerDataServiceBindings m_Bindings;
+    private PlayerDataService m_Bindings;
     public LoginManager LoginManager; 
     public string PlayerName;
 
     void Start()
     { 
         LoginManager.PlayerSignedIn += InitializePlayer; 
-        m_Bindings = new PlayerDataServiceBindings(CloudCodeService.Instance);
+        m_Bindings = new PlayerDataService(CloudCodeService.Instance);
 
     }
 
